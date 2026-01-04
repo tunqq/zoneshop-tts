@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: zoneshop-tts
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: VIETTEL_TOKEN
+        sync: false
+      - key: FLASK_SECRET_KEY
+        generateValue: true

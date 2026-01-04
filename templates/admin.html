@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZONE SHOP - Text to Speech</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #0f172a; min-height: 100vh; color: #f1f5f9; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 24px; display: flex; align-items: center; gap: 10px; }
+        .header-actions { display: flex; gap: 10px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #ec4899); color: white; }
+        .btn-secondary { background: #334155; color: #f1f5f9; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn:hover { transform: translateY(-1px); }
+        
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+        .stat-card h3 { font-size: 13px; color: #94a3b8; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; }
+        .stat-card .value.primary { color: #6366f1; }
+        .stat-card .value.success { color: #10b981; }
+        .stat-card .value.warning { color: #f59e0b; }
+        
+        .card { background: #1e293b; border-radius: 16px; padding: 24px; border: 1px solid #334155; }
+        .card-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #334155; }
+        th { font-size: 12px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+        td { font-size: 14px; }
+        tr:hover { background: #334155; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-admin { background: #6366f1; color: white; }
+        .badge-user { background: #334155; color: #94a3b8; }
+        
+        .progress-bar { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981, #6366f1); transition: width 0.3s; }
+        
+        .actions { display: flex; gap: 6px; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 1000; }
+        .modal.active { display: flex; }
+        .modal-content { background: #1e293b; border-radius: 16px; padding: 30px; width: 100%; max-width: 450px; border: 1px solid #334155; }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; background: #334155; border: 1px solid #475569; border-radius: 8px; color: #f1f5f9; font-size: 14px; }
+        .form-group input:focus { outline: none; border-color: #6366f1; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-actions .btn { flex: 1; justify-content: center; }
+        
+        /* ===== RESPONSIVE ===== */
+        .hide-mobile { display: inline; }
+        
+        @media (max-width: 900px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .stats .stat-card:first-child { grid-column: span 2; }
+            table { font-size: 12px; }
+            th, td { padding: 8px 10px; }
+            .actions { flex-wrap: wrap; }
+        }
+        
+        @media (max-width: 768px) {
+            .hide-mobile { display: none !important; }
+            .container { padding: 15px 10px; }
+            
+            /* Header */
+            .header { flex-direction: column; gap: 15px; text-align: center; margin-bottom: 20px; }
+            .header h1 { font-size: 18px; }
+            .header-actions { width: 100%; justify-content: center; }
+            .header-actions .btn { padding: 8px 12px; font-size: 12px; }
+            
+            /* Stats */
+            .stats { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+            .stats .stat-card:first-child { grid-column: span 2; }
+            .stat-card { padding: 12px; border-radius: 10px; }
+            .stat-card h3 { font-size: 11px; margin-bottom: 5px; }
+            .stat-card .value { font-size: 20px; }
+            
+            /* Viettel card specific */
+            .stat-card:first-child > div:first-child { flex-direction: column; gap: 10px; align-items: flex-start !important; }
+            .stat-card:first-child > div:first-child > div { width: 100%; justify-content: center; }
+            .stat-card:first-child > div:nth-child(2) > div { grid-template-columns: 1fr !important; gap: 15px !important; }
+            .stat-card:first-child > div:nth-child(2) > div > div { font-size: 22px !important; }
+            .stat-card:first-child > div:nth-child(3) { grid-template-columns: 1fr !important; gap: 8px !important; }
+            
+            /* Card */
+            .card { padding: 15px; border-radius: 12px; }
+            .card-title { font-size: 14px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+            .card-title .btn { font-size: 11px; padding: 6px 10px; }
+            
+            /* Table - scroll horizontal */
+            .card { overflow-x: auto; }
+            table { min-width: 600px; }
+            th, td { padding: 10px 8px; font-size: 11px; white-space: nowrap; }
+            .badge { font-size: 10px; padding: 3px 8px; }
+            .progress-bar { width: 60px; }
+            .actions { gap: 4px; }
+            .btn-sm { padding: 5px 8px; font-size: 10px; }
+            
+            /* Modal */
+            .modal-content { margin: 15px; padding: 20px; max-width: calc(100% - 30px); max-height: 85vh; overflow-y: auto; border-radius: 12px; }
+            .modal-title { font-size: 16px; margin-bottom: 15px; }
+            .form-group { margin-bottom: 12px; }
+            .form-group label { font-size: 12px; }
+            .form-group input, .form-group select { padding: 10px; font-size: 13px; }
+            .modal-actions { margin-top: 15px; }
+            .modal-actions .btn { padding: 10px; font-size: 13px; }
+        }
+        
+        @media (max-width: 480px) {
+            .container { padding: 10px 8px; }
+            .header h1 { font-size: 16px; }
+            .header-actions .btn { padding: 6px 10px; font-size: 11px; }
+            .stats { gap: 8px; }
+            .stat-card { padding: 10px; }
+            .stat-card .value { font-size: 18px; }
+            .card { padding: 12px; }
+            table { min-width: 550px; }
+            th, td { padding: 8px 6px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-cogs"></i> Quản trị hệ thống</h1>
+            <div class="header-actions">
+                <a href="/" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Về trang chính</a>
+                <a href="/logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <!-- Viettel AI Quota Card -->
+            <div class="stat-card" style="border: 2px solid #f59e0b; grid-column: span 4;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3><i class="fas fa-key"></i> Thông tin gói Viettel AI TTS <span style="font-size:11px;color:#10b981;font-weight:normal;margin-left:8px;"><i class="fas fa-circle"></i> Tự động cập nhật</span></h3>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm btn-primary" onclick="showViettelModal()"><i class="fas fa-box"></i> Cập nhật gói</button>
+                        <a href="https://viettelai.vn/dashboard/service/tts" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-external-link-alt"></i> Viettel AI</a>
+                    </div>
+                </div>
+                
+                <div style="background:#1a1a2e;border-radius:12px;padding:20px;margin-top:15px;border-left:4px solid #f59e0b;">
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:30px;">
+                        <div>
+                            <div style="font-size:12px;color:#94a3b8;margin-bottom:5px;">Tổng hạn mức</div>
+                            <div style="font-size:26px;font-weight:700;color:#f1f5f9;" id="viettelQuota">{{ "{:,}".format(settings.viettel_quota | default(50000)) }}</div>
+                            <div style="font-size:11px;color:#64748b;">ký tự</div>
+                        </div>
+                        <div>
+                            <div style="font-size:12px;color:#94a3b8;margin-bottom:5px;">Đã sử dụng</div>
+                            <div style="font-size:26px;font-weight:700;color:#ef4444;" id="viettelUsed">{{ "{:,}".format(settings.viettel_used | default(0)) }}</div>
+                            <div style="font-size:11px;color:#64748b;">ký tự</div>
+                        </div>
+                        <div>
+                            <div style="font-size:12px;color:#94a3b8;margin-bottom:5px;">Hạn mức còn lại</div>
+                            <div style="font-size:26px;font-weight:700;color:#10b981;" id="viettelRemaining">{{ "{:,}".format((settings.viettel_quota | default(50000)) - (settings.viettel_used | default(0))) }}</div>
+                            <div style="font-size:11px;color:#64748b;">ký tự</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <div class="progress-bar" style="height:10px;border-radius:5px;">
+                            <div class="progress-fill" id="viettelProgress" style="width:0%;background:linear-gradient(90deg, #10b981, #f59e0b, #ef4444);"></div>
+                        </div>
+                        <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:5px;" id="usagePercent">0% đã sử dụng</div>
+                    </div>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:15px;">
+                    <div style="text-align:center;padding:12px;background:#334155;border-radius:8px;">
+                        <div style="font-size:11px;color:#94a3b8;"><i class="fas fa-share"></i> Đã cấp cho users</div>
+                        <div class="value primary" id="totalQuotaAllocated" style="font-size:20px;">--</div>
+                    </div>
+                    <div style="text-align:center;padding:12px;background:#334155;border-radius:8px;">
+                        <div style="font-size:11px;color:#94a3b8;"><i class="fas fa-check-circle"></i> Còn có thể cấp</div>
+                        <div class="value success" id="quotaAvailable" style="font-size:20px;">--</div>
+                    </div>
+                    <div style="text-align:center;padding:12px;background:#334155;border-radius:8px;">
+                        <div style="font-size:11px;color:#94a3b8;"><i class="fas fa-chart-bar"></i> Users đã dùng</div>
+                        <div class="value" style="font-size:20px;color:#06b6d4;" id="usersUsed">--</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top:12px;font-size:11px;color:#64748b;display:flex;align-items:center;gap:5px;">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Số liệu tự động cập nhật mỗi khi user tạo audio. Nhấn "Cập nhật gói" khi mua thêm quota từ Viettel AI.</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <h3><i class="fas fa-users"></i> Tổng người dùng</h3>
+                <div class="value primary" id="totalUsers">{{ users|length }}</div>
+            </div>
+            <div class="stat-card">
+                <h3><i class="fas fa-chart-pie"></i> Tổng quota đã cấp</h3>
+                <div class="value success" id="totalQuota">0</div>
+            </div>
+            <div class="stat-card">
+                <h3><i class="fas fa-chart-line"></i> Tổng đã dùng thực tế</h3>
+                <div class="value warning" id="totalUsed">0</div>
+            </div>
+            <div class="stat-card">
+                <h3><i class="fas fa-chart-area"></i> Tổng chưa dùng</h3>
+                <div class="value" style="color:#06b6d4;" id="totalUnused">0</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                <span><i class="fas fa-users"></i> Danh sách người dùng</span>
+                <button class="btn btn-primary btn-sm" onclick="showCreateModal()"><i class="fas fa-plus"></i> Thêm user</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Vai trò</th>
+                        <th>Quota</th>
+                        <th>Đã dùng</th>
+                        <th>Còn lại</th>
+                        <th>Ngày tạo</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="userTable"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Modal tạo user -->
+    <div class="modal" id="createModal">
+        <div class="modal-content">
+            <div class="modal-title"><i class="fas fa-user-plus"></i> Tạo người dùng mới</div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="newUsername" placeholder="Ít nhất 3 ký tự">
+            </div>
+            <div class="form-group">
+                <label>Mật khẩu</label>
+                <input type="password" id="newPassword" placeholder="Ít nhất 6 ký tự">
+            </div>
+            <div class="form-group">
+                <label>Quota (ký tự)</label>
+                <input type="number" id="newQuota" value="10000">
+            </div>
+            <div class="form-group">
+                <label>Vai trò</label>
+                <select id="newRole">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('createModal')">Hủy</button>
+                <button class="btn btn-primary" onclick="createUser()">Tạo</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal sửa quota -->
+    <div class="modal" id="quotaModal">
+        <div class="modal-content">
+            <div class="modal-title"><i class="fas fa-edit"></i> Cập nhật Quota User</div>
+            <p style="color:#94a3b8;margin-bottom:15px;">User: <strong id="quotaUsername" style="color:#f1f5f9;"></strong></p>
+            <div class="form-group">
+                <label>Quota mới (ký tự)</label>
+                <input type="number" id="quotaValue">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('quotaModal')">Hủy</button>
+                <button class="btn btn-primary" onclick="updateQuota()">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal cập nhật gói Viettel -->
+    <div class="modal" id="viettelModal">
+        <div class="modal-content">
+            <div class="modal-title"><i class="fas fa-box"></i> Cập nhật gói Viettel AI</div>
+            <p style="color:#94a3b8;margin-bottom:15px;font-size:13px;">
+                Cập nhật khi bạn mua thêm quota từ <a href="https://viettelai.vn/dashboard/service/tts" target="_blank" style="color:#6366f1;">Viettel AI</a>
+            </p>
+            <div class="form-group">
+                <label>Tổng hạn mức mới (ký tự)</label>
+                <input type="number" id="viettelQuotaInput" value="{{ settings.viettel_quota }}">
+                <p style="color:#64748b;font-size:11px;margin-top:5px;">Nhập tổng quota của gói (bao gồm cả phần đã mua thêm)</p>
+            </div>
+            <div style="background:#334155;padding:12px;border-radius:8px;margin-top:10px;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;">
+                    <span>Đã sử dụng hiện tại:</span>
+                    <span style="color:#ef4444;font-weight:600;" id="currentUsedDisplay">{{ "{:,}".format(settings.viettel_used | default(0)) }} ký tự</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('viettelModal')">Hủy</button>
+                <button class="btn btn-primary" onclick="updateViettelQuota()">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal đổi mật khẩu user -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <div class="modal-title"><i class="fas fa-key"></i> Đổi mật khẩu User</div>
+            <p style="color:#94a3b8;margin-bottom:15px;">User: <strong id="passwordUsername" style="color:#f1f5f9;"></strong></p>
+            <div class="form-group">
+                <label>Mật khẩu mới</label>
+                <input type="password" id="newPasswordValue" placeholder="Ít nhất 6 ký tự">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('passwordModal')">Hủy</button>
+                <button class="btn btn-primary" onclick="updatePassword()">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let users = [];
+        let viettelData = { viettel_quota: 50000, viettel_used: 0 };
+        let currentEditUser = '';
+        
+        async function loadUsers() {
+            const res = await fetch('/admin/users');
+            users = await res.json();
+            renderTable();
+            updateStats();
+        }
+        
+        function renderTable() {
+            const tbody = document.getElementById('userTable');
+            tbody.innerHTML = users.map(u => {
+                const remaining = u.quota - u.used;
+                const percent = u.quota > 0 ? (u.used / u.quota * 100) : 0;
+                return `
+                    <tr>
+                        <td><strong>${u.username}</strong></td>
+                        <td><span class="badge badge-${u.role}">${u.role}</span></td>
+                        <td>${u.quota.toLocaleString()}</td>
+                        <td>
+                            ${u.used.toLocaleString()}
+                            <div class="progress-bar" style="margin-top:4px;width:80px;">
+                                <div class="progress-fill" style="width:${Math.min(percent, 100)}%"></div>
+                            </div>
+                        </td>
+                        <td style="color:${remaining > 0 ? '#10b981' : '#ef4444'}">${remaining.toLocaleString()}</td>
+                        <td style="color:#94a3b8;font-size:12px;">${u.created_at}</td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn btn-secondary btn-sm" onclick="showQuotaModal('${u.username}', ${u.quota})" title="Sửa quota"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-primary btn-sm" onclick="showPasswordModal('${u.username}')" title="Đổi mật khẩu"><i class="fas fa-key"></i></button>
+                                <button class="btn btn-success btn-sm" onclick="resetUsage('${u.username}')" title="Reset usage"><i class="fas fa-redo"></i></button>
+                                ${u.username !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.username}')" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function updateStats() {
+            // Tính từ users - không tính admin
+            const nonAdminUsers = users.filter(u => u.role !== 'admin');
+            const totalQuotaAllocated = nonAdminUsers.reduce((sum, u) => sum + u.quota, 0);
+            const usersUsed = users.reduce((sum, u) => sum + u.used, 0);
+            const totalUnused = nonAdminUsers.reduce((sum, u) => sum + (u.quota - u.used), 0);
+            
+            // Lấy từ viettelData (đã được cập nhật từ API)
+            const viettelQuota = viettelData.viettel_quota;
+            const viettelUsed = viettelData.viettel_used;
+            const viettelRemaining = viettelQuota - viettelUsed;
+            
+            // Còn có thể cấp = Hạn mức còn lại - (Đã cấp - Đã dùng)
+            const quotaAvailable = viettelRemaining - (totalQuotaAllocated - usersUsed);
+            
+            // Cập nhật UI
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('totalQuota').textContent = totalQuotaAllocated.toLocaleString();
+            document.getElementById('totalUsed').textContent = usersUsed.toLocaleString();
+            document.getElementById('totalUnused').textContent = totalUnused.toLocaleString();
+            document.getElementById('totalQuotaAllocated').textContent = totalQuotaAllocated.toLocaleString();
+            document.getElementById('quotaAvailable').textContent = quotaAvailable.toLocaleString();
+            document.getElementById('usersUsed').textContent = usersUsed.toLocaleString();
+            
+            // Cập nhật Viettel stats
+            document.getElementById('viettelQuota').textContent = viettelQuota.toLocaleString();
+            document.getElementById('viettelUsed').textContent = viettelUsed.toLocaleString();
+            document.getElementById('viettelRemaining').textContent = viettelRemaining.toLocaleString();
+            
+            const percent = viettelQuota > 0 ? (viettelUsed / viettelQuota * 100) : 0;
+            document.getElementById('viettelProgress').style.width = Math.min(percent, 100) + '%';
+            document.getElementById('usagePercent').textContent = percent.toFixed(1) + '% đã sử dụng';
+            
+            // Màu cho quota available
+            const quotaAvailableEl = document.getElementById('quotaAvailable');
+            quotaAvailableEl.style.color = quotaAvailable <= 0 ? '#ef4444' : quotaAvailable < 10000 ? '#f59e0b' : '#10b981';
+        }
+        
+        function showCreateModal() { document.getElementById('createModal').classList.add('active'); }
+        function showQuotaModal(username, quota) {
+            currentEditUser = username;
+            document.getElementById('quotaUsername').textContent = username;
+            document.getElementById('quotaValue').value = quota;
+            document.getElementById('quotaModal').classList.add('active');
+        }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        
+        async function createUser() {
+            const username = document.getElementById('newUsername').value.trim();
+            const password = document.getElementById('newPassword').value;
+            const quota = parseInt(document.getElementById('newQuota').value);
+            const role = document.getElementById('newRole').value;
+            
+            const res = await fetch('/admin/user/create', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, quota, role })
+            });
+            const data = await res.json();
+            if (data.success) { closeModal('createModal'); refreshData(); document.getElementById('newUsername').value = ''; document.getElementById('newPassword').value = ''; }
+            else alert(data.error);
+        }
+        
+        async function updateQuota() {
+            const quota = parseInt(document.getElementById('quotaValue').value);
+            const res = await fetch(`/admin/user/${currentEditUser}/quota`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quota })
+            });
+            const data = await res.json();
+            if (data.success) { closeModal('quotaModal'); refreshData(); } else alert(data.error);
+        }
+        
+        async function resetUsage(username) {
+            if (!confirm(`Reset số ký tự đã dùng của ${username} về 0?`)) return;
+            await fetch(`/admin/user/${username}/reset`, { method: 'POST' });
+            refreshData();
+        }
+        
+        async function deleteUser(username) {
+            if (!confirm(`Xóa user ${username}?`)) return;
+            await fetch(`/admin/user/${username}`, { method: 'DELETE' });
+            refreshData();
+        }
+        
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); });
+        });
+        
+        function showViettelModal() {
+            document.getElementById('currentUsedDisplay').textContent = viettelData.viettel_used.toLocaleString() + ' ký tự';
+            document.getElementById('viettelQuotaInput').value = viettelData.viettel_quota;
+            document.getElementById('viettelModal').classList.add('active');
+        }
+        
+        let currentPasswordUser = '';
+        function showPasswordModal(username) {
+            currentPasswordUser = username;
+            document.getElementById('passwordUsername').textContent = username;
+            document.getElementById('newPasswordValue').value = '';
+            document.getElementById('passwordModal').classList.add('active');
+        }
+        
+        async function updatePassword() {
+            const password = document.getElementById('newPasswordValue').value;
+            if (password.length < 6) { alert('Mật khẩu phải có ít nhất 6 ký tự'); return; }
+            
+            const res = await fetch(`/admin/user/${currentPasswordUser}/password`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            const data = await res.json();
+            if (data.success) { closeModal('passwordModal'); alert('Đổi mật khẩu thành công!'); }
+            else alert(data.error);
+        }
+        
+        async function updateViettelQuota() {
+            const viettel_quota = parseInt(document.getElementById('viettelQuotaInput').value);
+            const res = await fetch('/admin/viettel-quota', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ viettel_quota })
+            });
+            const data = await res.json();
+            if (data.success) { closeModal('viettelModal'); refreshData(); } else alert(data.error);
+        }
+        
+        async function refreshData() {
+            try {
+                // Lấy dữ liệu Viettel quota
+                const res = await fetch('/admin/viettel-quota');
+                const data = await res.json();
+                viettelData = {
+                    viettel_quota: data.viettel_quota,
+                    viettel_used: data.viettel_used
+                };
+                
+                // Lấy dữ liệu users
+                const usersRes = await fetch('/admin/users');
+                users = await usersRes.json();
+                
+                // Cập nhật UI
+                renderTable();
+                updateStats();
+            } catch (e) {
+                console.error('Refresh error:', e);
+            }
+        }
+        
+        // Khởi tạo
+        refreshData();
+        setInterval(refreshData, 5000);
+    </script>
+</body>
+</html>

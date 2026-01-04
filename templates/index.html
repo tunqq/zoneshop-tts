@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZONE SHOP - Text to Speech</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1; --primary-dark: #4f46e5; --secondary: #ec4899;
+            --accent: #06b6d4; --bg-dark: #0f172a; --bg-card: #1e293b;
+            --bg-input: #334155; --text-primary: #f1f5f9; --text-secondary: #94a3b8;
+            --border: #475569; --success: #10b981; --danger: #ef4444;
+            --male: #3b82f6; --female: #ec4899;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); min-height: 100vh; color: var(--text-primary); }
+        .bg-animation {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(circle at 20% 80%, rgba(99,102,241,0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(236,72,153,0.1) 0%, transparent 50%);
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .logo-icon {
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: white; box-shadow: 0 8px 30px rgba(99,102,241,0.3);
+        }
+        .logo h1 { font-size: 26px; font-weight: 700; }
+        .subtitle { color: var(--text-secondary); font-size: 14px; }
+        
+        .tabs { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
+        .tab-btn {
+            padding: 10px 20px; background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text-secondary); font-size: 14px; font-weight: 500;
+            cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 6px;
+        }
+        .tab-btn:hover { border-color: var(--primary); color: var(--text-primary); }
+        .tab-btn.active { background: linear-gradient(135deg, var(--primary), var(--secondary)); border-color: transparent; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .main-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
+        @media (max-width: 900px) { 
+            .main-grid { grid-template-columns: 1fr; } 
+            #tab-projects > div { grid-template-columns: 1fr !important; }
+            #projectDetail > div { grid-template-columns: 1fr !important; }
+        }
+        
+        .card { background: var(--bg-card); border-radius: 16px; padding: 24px; border: 1px solid var(--border); }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        
+        .form-group { margin-bottom: 16px; }
+        label { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-weight: 500; font-size: 13px; }
+        textarea {
+            width: 100%; height: 100px; padding: 12px; background: var(--bg-input);
+            border: 2px solid var(--border); border-radius: 10px; color: var(--text-primary);
+            font-size: 14px; font-family: inherit; resize: vertical; transition: all 0.3s;
+        }
+        textarea:focus { outline: none; border-color: var(--primary); }
+        textarea::placeholder { color: var(--text-secondary); }
+        select {
+            width: 100%; padding: 10px 12px; background: var(--bg-input); border: 2px solid var(--border);
+            border-radius: 10px; color: var(--text-primary); font-size: 14px; cursor: pointer;
+        }
+        .char-counter { text-align: right; font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+        .char-counter.warning { color: #f59e0b; }
+        
+        .section-title { font-size: 13px; font-weight: 600; margin: 16px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+        .options-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .option-item { flex: 1; min-width: 100px; background: var(--bg-input); padding: 12px; border-radius: 10px; }
+        .option-item label { font-size: 11px; margin-bottom: 8px; }
+        .slider-wrap { display: flex; align-items: center; gap: 8px; }
+        input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; background: var(--border); border-radius: 4px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--primary); border-radius: 50%; cursor: pointer; }
+        .slider-val { min-width: 36px; font-size: 12px; font-weight: 600; color: var(--accent); text-align: center; }
+        
+        .checkbox-wrap { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg-input); border-radius: 8px; margin-top: 12px; cursor: pointer; }
+        .checkbox-wrap input { display: none; }
+        .checkmark { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .checkbox-wrap input:checked + .checkmark { background: var(--primary); border-color: var(--primary); }
+        .checkbox-wrap input:checked + .checkmark::after { content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900; color: white; font-size: 10px; }
+        .checkbox-label { font-size: 13px; }
+        
+        .btn { padding: 12px 20px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-primary { width: 100%; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; margin-top: 16px; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
+        .btn-primary:disabled { background: var(--border); cursor: not-allowed; transform: none; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-sm { padding: 8px 12px; font-size: 12px; }
+        .btn-icon { padding: 6px 8px; background: var(--bg-input); color: var(--text-secondary); border-radius: 6px; border: none; cursor: pointer; }
+        .btn-icon:hover { background: var(--primary); color: white; }
+        
+        .voice-grid { display: grid; gap: 8px; max-height: 420px; overflow-y: auto; }
+        .voice-card {
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+            background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .voice-card:hover { border-color: var(--primary); transform: translateX(3px); }
+        .voice-card.playing { border-color: var(--success); background: rgba(16,185,129,0.1); }
+        .voice-avatar {
+            width: 36px; height: 36px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; color: white;
+        }
+        .voice-avatar.male { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .voice-avatar.female { background: linear-gradient(135deg, #ec4899, #db2777); }
+        .voice-info { flex: 1; min-width: 0; }
+        .voice-name { font-weight: 600; font-size: 13px; }
+        .voice-meta { font-size: 10px; color: var(--text-secondary); margin-top: 1px; }
+        .voice-play { width: 30px; height: 30px; border-radius: 50%; background: var(--bg-dark); border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; transition: all 0.3s; }
+        .voice-play:hover { background: var(--primary); }
+        
+        .region-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+        .region-title:first-child { margin-top: 0; }
+        
+        .history-list { display: grid; gap: 8px; max-height: 500px; overflow-y: auto; }
+        .history-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; }
+        .history-item:hover { border-color: var(--primary); }
+        .history-icon { width: 36px; height: 36px; background: var(--bg-dark); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--accent); }
+        .history-info { flex: 1; min-width: 0; }
+        .history-text { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .history-meta { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+        .history-actions { display: flex; gap: 4px; }
+        .empty-state { text-align: center; padding: 30px; color: var(--text-secondary); }
+        .empty-state .icon { font-size: 40px; margin-bottom: 10px; opacity: 0.5; }
+        
+        .audio-result { display: none; margin-top: 16px; background: rgba(99,102,241,0.1); border: 1px solid var(--primary); border-radius: 12px; padding: 16px; }
+        .audio-result h4 { font-size: 13px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        audio { width: 100%; height: 40px; border-radius: 6px; }
+        .audio-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .audio-actions .btn { flex: 1; }
+        
+        .loading { display: none; text-align: center; padding: 20px; }
+        .loader { width: 36px; height: 36px; border: 3px solid var(--bg-input); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error { display: none; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; padding: 10px 12px; border-radius: 8px; margin-top: 12px; font-size: 12px; }
+        
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+        
+        /* ===== RESPONSIVE ===== */
+        .hide-mobile { display: inline; }
+        .show-mobile { display: none; }
+        
+        /* Tablet */
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+            #tab-projects > div { grid-template-columns: 1fr !important; }
+            #projectDetail > div { grid-template-columns: 1fr !important; }
+        }
+        
+        /* Mobile */
+        @media (max-width: 768px) {
+            .hide-mobile { display: none !important; }
+            .show-mobile { display: inline !important; }
+            
+            /* Container & Layout */
+            .container { padding: 12px 10px; }
+            .header { margin-bottom: 15px; }
+            .logo { gap: 8px; }
+            .logo h1 { font-size: 18px; }
+            .logo-icon { width: 36px; height: 36px; font-size: 14px; border-radius: 10px; }
+            .subtitle { font-size: 11px; }
+            
+            /* User bar */
+            .user-bar { 
+                flex-direction: column !important; 
+                gap: 10px !important; 
+                padding: 10px 12px !important;
+                align-items: stretch !important; 
+            }
+            .user-bar > div:first-child { justify-content: center; }
+            .user-bar > div:last-child { justify-content: center !important; }
+            
+            /* Tabs - quan trọng */
+            .tabs { 
+                gap: 4px; 
+                justify-content: space-between;
+                margin-bottom: 15px;
+            }
+            .tab-btn { 
+                padding: 8px 6px; 
+                font-size: 10px; 
+                flex: 1; 
+                min-width: 0;
+                justify-content: center;
+                gap: 4px;
+            }
+            .tab-btn i { font-size: 12px; }
+            .tab-btn span { display: none; }
+            
+            /* Cards */
+            .card { padding: 14px; border-radius: 12px; }
+            .card-title { font-size: 13px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+            .card-title .btn { font-size: 10px; padding: 5px 8px; }
+            
+            /* Form elements */
+            .form-group { margin-bottom: 12px; }
+            label { font-size: 12px; margin-bottom: 4px; }
+            textarea { height: 80px; padding: 10px; font-size: 13px; border-radius: 8px; }
+            select { padding: 8px 10px; font-size: 12px; border-radius: 8px; }
+            .char-counter { font-size: 10px; }
+            
+            /* Options */
+            .section-title { font-size: 11px; margin: 10px 0 8px; padding-bottom: 6px; }
+            .options-row { flex-direction: column; gap: 8px; }
+            .option-item { padding: 10px; border-radius: 8px; }
+            .option-item label { font-size: 10px; }
+            .slider-val { font-size: 11px; min-width: 30px; }
+            
+            /* Checkbox */
+            .checkbox-wrap { padding: 8px 10px; margin-top: 10px; }
+            .checkmark { width: 16px; height: 16px; }
+            .checkbox-label { font-size: 12px; }
+            
+            /* Buttons */
+            .btn { padding: 10px 14px; font-size: 12px; border-radius: 8px; }
+            .btn-primary { margin-top: 12px; }
+            .btn-sm { padding: 6px 10px; font-size: 10px; }
+            .btn-icon { padding: 5px 7px; font-size: 10px; border-radius: 5px; }
+            
+            /* Voice cards */
+            .voice-grid { max-height: 280px; gap: 6px; }
+            .voice-card { padding: 8px; gap: 8px; border-radius: 8px; }
+            .voice-avatar { width: 28px; height: 28px; font-size: 10px; border-radius: 6px; }
+            .voice-name { font-size: 11px; }
+            .voice-meta { font-size: 9px; }
+            .voice-play { width: 26px; height: 26px; font-size: 9px; }
+            .region-title { font-size: 10px; margin: 10px 0 5px; }
+            
+            /* History */
+            .history-list { max-height: 350px; gap: 6px; }
+            .history-item { padding: 8px; gap: 8px; border-radius: 8px; }
+            .history-icon { width: 28px; height: 28px; font-size: 11px; border-radius: 6px; flex-shrink: 0; }
+            .history-info { min-width: 0; }
+            .history-text { font-size: 11px; }
+            .history-meta { font-size: 9px; }
+            .history-actions { gap: 3px; flex-shrink: 0; }
+            
+            /* Empty state */
+            .empty-state { padding: 20px 10px; }
+            .empty-state .icon { font-size: 30px; margin-bottom: 8px; }
+            .empty-state p { font-size: 12px; }
+            
+            /* Audio result */
+            .audio-result { padding: 12px; border-radius: 10px; margin-top: 12px; }
+            .audio-result h4 { font-size: 12px; margin-bottom: 8px; }
+            audio { height: 36px; }
+            .audio-actions { margin-top: 8px; }
+            
+            /* Loading & Error */
+            .loading { padding: 15px; }
+            .loader { width: 30px; height: 30px; }
+            .error { padding: 8px 10px; font-size: 11px; border-radius: 6px; }
+            
+            /* Projects tab specific */
+            #tab-projects > div { gap: 12px !important; }
+            #projectList { max-height: 200px !important; }
+            #projectDetail > div { gap: 10px !important; }
+            #clipList { max-height: 180px !important; }
+            #projectPlaceholder .empty-state { padding: 40px 15px !important; }
+            
+            /* Project detail form */
+            #projectDetail input[type="text"],
+            #projectDetail textarea,
+            #projectDetail select { font-size: 12px !important; padding: 8px !important; }
+            #projectDetail textarea { height: 60px !important; }
+            
+            /* Voices tab grid */
+            #tab-voices .card > div { grid-template-columns: 1fr !important; gap: 15px !important; }
+        }
+        
+        /* Small Mobile */
+        @media (max-width: 400px) {
+            .container { padding: 8px 6px; }
+            .logo h1 { font-size: 16px; }
+            .logo-icon { width: 32px; height: 32px; font-size: 12px; }
+            
+            .tab-btn { padding: 6px 4px; }
+            .tab-btn i { font-size: 11px; }
+            
+            .card { padding: 10px; }
+            textarea { height: 70px; font-size: 12px; }
+            
+            .voice-grid { max-height: 220px; }
+            .history-list { max-height: 280px; }
+            
+            .btn { padding: 8px 12px; font-size: 11px; }
+            .btn-icon { padding: 4px 6px; font-size: 9px; }
+        }
+        
+        /* Modal responsive */
+        @media (max-width: 768px) {
+            #changePasswordModal > div,
+            #createProjectModal > div,
+            #clipTextModal > div {
+                margin: 10px !important;
+                padding: 20px !important;
+                max-width: calc(100% - 20px) !important;
+                max-height: 85vh !important;
+                overflow-y: auto !important;
+                border-radius: 12px !important;
+            }
+            #changePasswordModal h3,
+            #createProjectModal h3,
+            #clipTextModal h3 {
+                font-size: 16px !important;
+                margin-bottom: 15px !important;
+            }
+            #changePasswordModal input,
+            #createProjectModal input,
+            #createProjectModal textarea {
+                padding: 10px !important;
+                font-size: 13px !important;
+            }
+            #changePasswordModal button,
+            #createProjectModal button,
+            #clipTextModal button {
+                padding: 10px !important;
+                font-size: 13px !important;
+            }
+            #clipTextContent {
+                font-size: 13px !important;
+                padding: 12px !important;
+                max-height: 50vh !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="container">
+        <!-- User bar -->
+        <div class="user-bar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:12px 16px;background:var(--bg-card);border-radius:12px;border:1px solid var(--border);flex-wrap:wrap;gap:10px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;"><i class="fas fa-user"></i></div>
+                <div>
+                    <div style="font-weight:600;font-size:14px;">{{ user }}</div>
+                    <div style="font-size:11px;color:var(--text-secondary);">
+                        Quota: <span style="color:var(--success);" id="quotaRemaining">{{ user_data.quota - user_data.used }}</span> / {{ user_data.quota }}
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button onclick="showChangePasswordModal()" style="padding:8px 12px;background:var(--bg-input);border-radius:8px;color:var(--text-primary);font-size:12px;display:flex;align-items:center;gap:5px;border:none;cursor:pointer;"><i class="fas fa-key"></i> <span class="hide-mobile">Đổi MK</span></button>
+                {% if user_data.role == 'admin' %}
+                <a href="/admin" style="padding:8px 12px;background:var(--bg-input);border-radius:8px;color:var(--text-primary);text-decoration:none;font-size:12px;display:flex;align-items:center;gap:5px;"><i class="fas fa-cogs"></i> <span class="hide-mobile">Admin</span></a>
+                {% endif %}
+                <a href="/logout" style="padding:8px 12px;background:var(--danger);border-radius:8px;color:white;text-decoration:none;font-size:12px;display:flex;align-items:center;gap:5px;"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+        
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-microphone-alt"></i></div>
+                <h1>ZONE SHOP</h1>
+            </div>
+            <p class="subtitle">Text to Speech - Chuyển văn bản thành giọng nói</p>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="create"><i class="fas fa-magic"></i> Tạo mới</button>
+            <button class="tab-btn" data-tab="projects"><i class="fas fa-folder"></i> Dự án <span id="projectCount">(0)</span></button>
+            <button class="tab-btn" data-tab="voices"><i class="fas fa-microphone"></i> Giọng đọc (16)</button>
+            <button class="tab-btn" data-tab="history"><i class="fas fa-history"></i> Lịch sử <span id="historyCount">({{ history|length }})</span></button>
+        </div>
+        
+        <!-- Tab: Create -->
+        <div class="tab-content active" id="tab-create">
+            <div class="main-grid">
+                <div class="card">
+                    <form id="ttsForm">
+                        <div class="form-group">
+                            <label><i class="fas fa-pen"></i> Văn bản</label>
+                            <textarea id="text" name="text" placeholder="Nhập nội dung cần chuyển thành giọng nói..." maxlength="5000"></textarea>
+                            <div class="char-counter"><span id="charCount">0</span>/5000</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-microphone"></i> Giọng đọc</label>
+                            <select id="voice" name="voice">
+                                <optgroup label="Miền Bắc">
+                                    {% for voice in voices if voice.region == 'Miền Bắc' %}
+                                    <option value="{{ voice.code }}">{{ voice.name }} ({{ voice.gender }})</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Miền Trung">
+                                    {% for voice in voices if voice.region == 'Miền Trung' %}
+                                    <option value="{{ voice.code }}">{{ voice.name }} ({{ voice.gender }})</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Miền Nam">
+                                    {% for voice in voices if voice.region == 'Miền Nam' %}
+                                    <option value="{{ voice.code }}">{{ voice.name }} ({{ voice.gender }})</option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+                        
+                        <div class="section-title"><i class="fas fa-sliders-h"></i> Tùy chỉnh</div>
+                        <div class="options-row">
+                            <div class="option-item">
+                                <label><i class="fas fa-tachometer-alt"></i> Tốc độ đọc</label>
+                                <div class="slider-wrap">
+                                    <input type="range" id="speed" min="0.8" max="1.2" step="0.1" value="1">
+                                    <span class="slider-val" id="speedVal">1.0</span>
+                                </div>
+                                <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">0.8 = Chậm, 1.2 = Nhanh</div>
+                            </div>
+                        </div>
+                        
+                        <div class="section-title"><i class="fas fa-lightbulb"></i> Mẹo ngắt quãng & nhịp điệu</div>
+                        <div style="font-size:12px;color:var(--text-secondary);background:var(--bg-input);padding:12px;border-radius:8px;">
+                            <p style="margin-bottom:6px;">• Dùng dấu <b style="color:var(--accent);">.</b> để tạo ngắt dài (kết thúc câu)</p>
+                            <p style="margin-bottom:6px;">• Dùng dấu <b style="color:var(--accent);">,</b> để tạo ngắt ngắn (giữa câu)</p>
+                            <p style="margin-bottom:6px;">• Dùng dấu <b style="color:var(--accent);">...</b> để tạo ngắt rất dài</p>
+                            <p>• Xuống dòng để tạo đoạn mới</p>
+                        </div>
+                        
+                        <label class="checkbox-wrap">
+                            <input type="checkbox" id="save_history" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label"><i class="fas fa-save"></i> Lưu vào lịch sử</span>
+                        </label>
+                        
+                        <button type="submit" class="btn btn-primary" id="submitBtn"><i class="fas fa-volume-up"></i> Tạo giọng nói</button>
+                    </form>
+                    
+                    <div class="loading" id="loading"><div class="loader"></div><p>Đang xử lý...</p></div>
+                    <div class="error" id="error"></div>
+                    <div class="audio-result" id="audioResult">
+                        <h4><i class="fas fa-music"></i> Kết quả</h4>
+                        <audio id="audioPlayer" controls></audio>
+                        <div class="audio-actions">
+                            <button class="btn btn-success btn-sm" id="downloadBtn"><i class="fas fa-download"></i> Tải MP3</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Voice preview sidebar -->
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-headphones"></i> Nghe thử giọng đọc</div>
+                    <div class="voice-grid" id="voicePreview">
+                        <div class="region-title"><i class="fas fa-map-marker-alt" style="color:#3b82f6;"></i> Miền Bắc</div>
+                        {% for voice in voices if voice.region == 'Miền Bắc' %}
+                        <div class="voice-card" data-voice="{{ voice.code }}">
+                            <div class="voice-avatar {{ 'male' if voice.gender == 'Nam' else 'female' }}">
+                                <i class="fas {{ 'fa-mars' if voice.gender == 'Nam' else 'fa-venus' }}"></i>
+                            </div>
+                            <div class="voice-info">
+                                <div class="voice-name">{{ voice.name }}</div>
+                                <div class="voice-meta">{{ voice.gender }}</div>
+                            </div>
+                            <button class="voice-play" title="Nghe thử"><i class="fas fa-play"></i></button>
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="region-title"><i class="fas fa-map-marker-alt" style="color:#10b981;"></i> Miền Trung</div>
+                        {% for voice in voices if voice.region == 'Miền Trung' %}
+                        <div class="voice-card" data-voice="{{ voice.code }}">
+                            <div class="voice-avatar {{ 'male' if voice.gender == 'Nam' else 'female' }}">
+                                <i class="fas {{ 'fa-mars' if voice.gender == 'Nam' else 'fa-venus' }}"></i>
+                            </div>
+                            <div class="voice-info">
+                                <div class="voice-name">{{ voice.name }}</div>
+                                <div class="voice-meta">{{ voice.gender }}</div>
+                            </div>
+                            <button class="voice-play" title="Nghe thử"><i class="fas fa-play"></i></button>
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="region-title"><i class="fas fa-map-marker-alt" style="color:#f59e0b;"></i> Miền Nam</div>
+                        {% for voice in voices if voice.region == 'Miền Nam' %}
+                        <div class="voice-card" data-voice="{{ voice.code }}">
+                            <div class="voice-avatar {{ 'male' if voice.gender == 'Nam' else 'female' }}">
+                                <i class="fas {{ 'fa-mars' if voice.gender == 'Nam' else 'fa-venus' }}"></i>
+                            </div>
+                            <div class="voice-info">
+                                <div class="voice-name">{{ voice.name }}</div>
+                                <div class="voice-meta">{{ voice.gender }}</div>
+                            </div>
+                            <button class="voice-play" title="Nghe thử"><i class="fas fa-play"></i></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <audio id="demoPlayer" style="display:none;"></audio>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab: Projects -->
+        <div class="tab-content" id="tab-projects">
+            <div style="display:grid;grid-template-columns:320px 1fr;gap:20px;">
+                <!-- Danh sách dự án -->
+                <div class="card" style="height:fit-content;">
+                    <div class="card-title" style="justify-content:space-between;">
+                        <span><i class="fas fa-folder"></i> Dự án của bạn</span>
+                        <button class="btn btn-sm btn-success" onclick="showCreateProjectModal()"><i class="fas fa-plus"></i> Tạo</button>
+                    </div>
+                    <div id="projectList" class="history-list" style="max-height:500px;overflow-y:auto;">
+                        <div class="empty-state"><div class="icon"><i class="fas fa-folder-open"></i></div><p>Chưa có dự án nào</p></div>
+                    </div>
+                </div>
+                
+                <!-- Chi tiết dự án -->
+                <div class="card" id="projectDetail" style="display:none;">
+                    <div class="card-title" style="justify-content:space-between;">
+                        <span><i class="fas fa-film"></i> <span id="projectName">Tên dự án</span></span>
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn-icon" onclick="downloadProject()" title="Tải toàn bộ MP3" style="color:var(--success);"><i class="fas fa-download"></i></button>
+                            <button class="btn-icon" onclick="editProject()" title="Sửa"><i class="fas fa-edit"></i></button>
+                            <button class="btn-icon" onclick="deleteProject()" title="Xóa" style="color:var(--danger);"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <p id="projectDesc" style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;"></p>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                        <!-- Form thêm clip -->
+                        <div style="background:var(--bg-input);border-radius:10px;padding:14px;">
+                            <div style="font-size:13px;font-weight:600;margin-bottom:10px;"><i class="fas fa-plus-circle"></i> Thêm clip mới</div>
+                            <input type="text" id="clipName" placeholder="Tên clip (tùy chọn)" style="width:100%;padding:10px;background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;margin-bottom:8px;">
+                            <textarea id="clipText" placeholder="Nhập văn bản..." style="width:100%;height:100px;padding:10px;background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;resize:none;margin-bottom:8px;"></textarea>
+                            <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+                                <select id="clipVoice" style="flex:1;min-width:150px;padding:8px;background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:12px;">
+                                    {% for voice in voices %}
+                                    <option value="{{ voice.code }}">{{ voice.name }} ({{ voice.region }})</option>
+                                    {% endfor %}
+                                </select>
+                                <div style="display:flex;align-items:center;gap:6px;background:var(--bg-dark);padding:0 10px;border-radius:8px;border:1px solid var(--border);">
+                                    <span style="font-size:11px;color:var(--text-secondary);">Tốc độ:</span>
+                                    <input type="range" id="clipSpeed" min="0.8" max="1.2" step="0.1" value="1" style="width:60px;">
+                                    <span id="clipSpeedVal" style="font-size:11px;min-width:24px;">1.0</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="addClipToProject()" style="margin-top:0;width:100%;"><i class="fas fa-plus"></i> Thêm clip</button>
+                        </div>
+                        
+                        <!-- Danh sách clips -->
+                        <div>
+                            <div style="font-size:13px;font-weight:600;margin-bottom:10px;"><i class="fas fa-list"></i> Danh sách clips (<span id="clipCount">0</span>)</div>
+                            <div id="clipList" style="max-height:280px;overflow-y:auto;"></div>
+                        </div>
+                    </div>
+                    <audio id="clipPlayer" style="display:none;"></audio>
+                </div>
+                
+                <!-- Placeholder khi chưa chọn dự án -->
+                <div class="card" id="projectPlaceholder">
+                    <div class="empty-state" style="padding:100px 20px;">
+                        <div class="icon"><i class="fas fa-hand-pointer"></i></div>
+                        <p>Chọn một dự án để xem chi tiết<br><small style="color:var(--text-secondary);">hoặc tạo dự án mới</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab: Voices -->
+        <div class="tab-content" id="tab-voices">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-microphone"></i> Tất cả giọng đọc (16 giọng)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+                    <div>
+                        <div class="region-title"><i class="fas fa-map-marker-alt" style="color:#3b82f6;"></i> Miền Bắc</div>
+                        {% for voice in voices if voice.region == 'Miền Bắc' %}
+                        <div class="voice-card" data-voice="{{ voice.code }}" style="margin-bottom: 8px;">
+                            <div class="voice-avatar {{ 'male' if voice.gender == 'Nam' else 'female' }}"><i class="fas {{ 'fa-mars' if voice.gender == 'Nam' else 'fa-venus' }}"></i></div>
+                            <div class="voice-info">
+                                <div class="voice-name">{{ voice.name }}</div>
+                                <div class="voice-meta">{{ voice.gender }} • {{ voice.code }}</div>
+                            </div>
+                            <button class="voice-play"><i class="fas fa-play"></i></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <div class="region-title"><i class="fas fa-map-marker-alt" style="color:#10b981;"></i> Miền Trung</div>
+                        {% for voice in voices if voice.region == 'Miền Trung' %}
+                        <div class="voice-card" data-voice="{{ voice.code }}" style="margin-bottom: 8px;">
+                            <div class="voice-avatar {{ 'male' if voice.gender == 'Nam' else 'female' }}"><i class="fas {{ 'fa-mars' if voice.gender == 'Nam' else 'fa-venus' }}"></i></div>
+                            <div class="voice-info">
+                                <div class="voice-name">{{ voice.name }}</div>
+                                <div class="voice-meta">{{ voice.gender }} • {{ voice.code }}</div>
+                            </div>
+                            <button class="voice-play"><i class="fas fa-play"></i></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <div class="region-title"><i class="fas fa-map-marker-alt" style="color:#f59e0b;"></i> Miền Nam</div>
+                        {% for voice in voices if voice.region == 'Miền Nam' %}
+                        <div class="voice-card" data-voice="{{ voice.code }}" style="margin-bottom: 8px;">
+                            <div class="voice-avatar {{ 'male' if voice.gender == 'Nam' else 'female' }}"><i class="fas {{ 'fa-mars' if voice.gender == 'Nam' else 'fa-venus' }}"></i></div>
+                            <div class="voice-info">
+                                <div class="voice-name">{{ voice.name }}</div>
+                                <div class="voice-meta">{{ voice.gender }} • {{ voice.code }}</div>
+                            </div>
+                            <button class="voice-play"><i class="fas fa-play"></i></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab: History -->
+        <div class="tab-content" id="tab-history">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-history"></i> Lịch sử tạo audio</div>
+                <div class="history-list" id="historyList">
+                    {% if history %}
+                        {% for item in history %}
+                        <div class="history-item" data-id="{{ item.id }}" data-fulltext="{{ item.full_text|default(item.text, true)|e }}">
+                            <div class="history-icon"><i class="fas fa-music"></i></div>
+                            <div class="history-info" style="cursor:pointer;" onclick="showHistoryText(this.parentElement)">
+                                <div class="history-text">{{ item.text }}</div>
+                                <div class="history-meta">{{ item.voice_name }} • {{ item.created_at }}</div>
+                            </div>
+                            <div class="history-actions">
+                                <button class="btn-icon history-play" title="Phát"><i class="fas fa-play"></i></button>
+                                <button class="btn-icon history-download" title="Tải"><i class="fas fa-download"></i></button>
+                                <button class="btn-icon history-delete" title="Xóa" style="color: var(--danger);"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state"><div class="icon"><i class="fas fa-inbox"></i></div><p>Chưa có audio nào</p></div>
+                    {% endif %}
+                </div>
+                <audio id="historyPlayer" style="display:none;"></audio>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const form = document.getElementById('ttsForm');
+        const textArea = document.getElementById('text');
+        const charCount = document.getElementById('charCount');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const audioResult = document.getElementById('audioResult');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const demoPlayer = document.getElementById('demoPlayer');
+        const historyPlayer = document.getElementById('historyPlayer');
+        
+        let audioBlob = null;
+        let currentPlayingCard = null;
+        let currentHistoryItem = null;
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Char counter
+        textArea.addEventListener('input', () => {
+            const count = textArea.value.length;
+            charCount.textContent = count;
+            charCount.parentElement.className = count > 4500 ? 'char-counter warning' : 'char-counter';
+        });
+
+        // Speed slider
+        const speedSlider = document.getElementById('speed');
+        const speedVal = document.getElementById('speedVal');
+        speedSlider.addEventListener('input', () => { speedVal.textContent = speedSlider.value; });
+
+        // Form submit
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = textArea.value.trim();
+            if (!text) { showError('Vui lòng nhập văn bản'); return; }
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            audioResult.style.display = 'none';
+            submitBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('text', text);
+                formData.append('voice', document.getElementById('voice').value);
+                formData.append('speed', speedSlider.value);
+                formData.append('save_history', document.getElementById('save_history').checked ? 'true' : 'false');
+
+                const response = await fetch('/synthesize', { method: 'POST', body: formData });
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Có lỗi xảy ra');
+                }
+
+                audioBlob = await response.blob();
+                audioPlayer.src = URL.createObjectURL(audioBlob);
+                audioResult.style.display = 'block';
+                audioPlayer.play();
+                if (document.getElementById('save_history').checked) refreshHistory();
+                updateQuota();
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+        downloadBtn.addEventListener('click', async () => {
+            if (audioBlob) {
+                downloadBtn.disabled = true;
+                downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang chuyển đổi...';
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob, 'audio.wav');
+                    
+                    const response = await fetch('/convert-mp3', { method: 'POST', body: formData });
+                    if (response.ok) {
+                        const mp3Blob = await response.blob();
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(mp3Blob);
+                        a.download = 'zoneshop_audio.mp3';
+                        a.click();
+                    } else {
+                        alert('Lỗi chuyển đổi MP3');
+                    }
+                } catch (err) {
+                    alert('Lỗi: ' + err.message);
+                } finally {
+                    downloadBtn.disabled = false;
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Tải MP3';
+                }
+            }
+        });
+
+        function showError(msg) { error.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + msg; error.style.display = 'block'; }
+
+        // Voice demo
+        document.querySelectorAll('.voice-card').forEach(card => {
+            const playBtn = card.querySelector('.voice-play');
+            playBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const voice = card.dataset.voice;
+                
+                if (currentPlayingCard) {
+                    currentPlayingCard.classList.remove('playing');
+                    currentPlayingCard.querySelector('.voice-play').innerHTML = '<i class="fas fa-play"></i>';
+                }
+                
+                if (currentPlayingCard === card && !demoPlayer.paused) {
+                    demoPlayer.pause();
+                    currentPlayingCard = null;
+                    return;
+                }
+                
+                card.classList.add('playing');
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                currentPlayingCard = card;
+                
+                try {
+                    demoPlayer.src = `/demo/${voice}`;
+                    await demoPlayer.play();
+                } catch (err) {
+                    card.classList.remove('playing');
+                    playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                }
+            });
+            
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.voice-play')) return;
+                document.getElementById('voice').value = card.dataset.voice;
+            });
+        });
+
+        demoPlayer.addEventListener('ended', () => {
+            if (currentPlayingCard) {
+                currentPlayingCard.classList.remove('playing');
+                currentPlayingCard.querySelector('.voice-play').innerHTML = '<i class="fas fa-play"></i>';
+                currentPlayingCard = null;
+            }
+        });
+
+        // History
+        function setupHistoryPlay(item) {
+            const playBtn = item.querySelector('.history-play');
+            playBtn?.addEventListener('click', () => {
+                const itemId = item.dataset.id;
+                
+                // Nếu đang phát item này -> dừng
+                if (currentHistoryItem === item && !historyPlayer.paused) {
+                    historyPlayer.pause();
+                    playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    item.style.borderColor = 'var(--border)';
+                    currentHistoryItem = null;
+                    return;
+                }
+                
+                // Reset item cũ nếu có
+                if (currentHistoryItem) {
+                    currentHistoryItem.querySelector('.history-play').innerHTML = '<i class="fas fa-play"></i>';
+                    currentHistoryItem.style.borderColor = 'var(--border)';
+                }
+                
+                // Phát item mới
+                historyPlayer.src = `/history/${itemId}`;
+                historyPlayer.play();
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                item.style.borderColor = 'var(--success)';
+                currentHistoryItem = item;
+            });
+        }
+        
+        document.querySelectorAll('.history-item').forEach(item => {
+            setupHistoryPlay(item);
+            item.querySelector('.history-download')?.addEventListener('click', () => {
+                window.location.href = `/history/${item.dataset.id}/download`;
+            });
+            item.querySelector('.history-delete')?.addEventListener('click', async () => {
+                if (!confirm('Xóa audio này?')) return;
+                await fetch(`/history/${item.dataset.id}`, { method: 'DELETE' });
+                item.remove();
+                updateHistoryCount();
+            });
+        });
+        
+        // Khi audio kết thúc
+        historyPlayer.addEventListener('ended', () => {
+            if (currentHistoryItem) {
+                currentHistoryItem.querySelector('.history-play').innerHTML = '<i class="fas fa-play"></i>';
+                currentHistoryItem.style.borderColor = 'var(--border)';
+                currentHistoryItem = null;
+            }
+        });
+
+        async function refreshHistory() {
+            const res = await fetch('/history');
+            const history = await res.json();
+            const list = document.getElementById('historyList');
+            if (history.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="icon"><i class="fas fa-inbox"></i></div><p>Chưa có audio nào</p></div>';
+            } else {
+                list.innerHTML = history.map(item => `
+                    <div class="history-item" data-id="${item.id}" data-fulltext="${encodeURIComponent(item.full_text || item.text)}">
+                        <div class="history-icon"><i class="fas fa-music"></i></div>
+                        <div class="history-info" style="cursor:pointer;" onclick="showHistoryText(this.parentElement)">
+                            <div class="history-text">${item.text}</div>
+                            <div class="history-meta">${item.voice_name} • ${item.created_at}</div>
+                        </div>
+                        <div class="history-actions">
+                            <button class="btn-icon history-play" title="Phát"><i class="fas fa-play"></i></button>
+                            <button class="btn-icon history-download" title="Tải"><i class="fas fa-download"></i></button>
+                            <button class="btn-icon history-delete" title="Xóa" style="color: var(--danger);"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+                bindHistoryEvents();
+            }
+            updateHistoryCount();
+        }
+
+        function bindHistoryEvents() {
+            document.querySelectorAll('.history-item').forEach(item => {
+                setupHistoryPlay(item);
+                item.querySelector('.history-download')?.addEventListener('click', () => {
+                    window.location.href = `/history/${item.dataset.id}/download`;
+                });
+                item.querySelector('.history-delete')?.addEventListener('click', async () => {
+                    if (!confirm('Xóa audio này?')) return;
+                    await fetch(`/history/${item.dataset.id}`, { method: 'DELETE' });
+                    item.remove();
+                    updateHistoryCount();
+                });
+            });
+        }
+
+        function updateHistoryCount() {
+            const count = document.querySelectorAll('.history-item').length;
+            document.getElementById('historyCount').textContent = `(${count})`;
+        }
+
+        async function updateQuota() {
+            const res = await fetch('/user/quota');
+            const data = await res.json();
+            document.getElementById('quotaRemaining').textContent = data.remaining.toLocaleString();
+        }
+        
+        // ============ PROJECTS ============
+        let currentProjectId = null;
+        let currentClipItem = null;
+        const clipPlayer = document.getElementById('clipPlayer');
+        
+        // Load projects on page load
+        loadProjects();
+        
+        async function loadProjects() {
+            const res = await fetch('/projects');
+            const projects = await res.json();
+            const list = document.getElementById('projectList');
+            document.getElementById('projectCount').textContent = `(${projects.length})`;
+            
+            if (projects.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="icon"><i class="fas fa-folder-open"></i></div><p>Chưa có dự án nào</p></div>';
+                return;
+            }
+            
+            list.innerHTML = projects.map(p => `
+                <div class="history-item project-item" data-id="${p.id}" onclick="selectProject('${p.id}')">
+                    <div class="history-icon" style="background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;"><i class="fas fa-folder"></i></div>
+                    <div class="history-info">
+                        <div class="history-text" style="font-weight:600;">${p.name}</div>
+                        <div class="history-meta">${p.clips.length} clips • ${p.updated_at}</div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:var(--text-secondary);"></i>
+                </div>
+            `).join('');
+        }
+        
+        async function selectProject(projectId) {
+            currentProjectId = projectId;
+            document.querySelectorAll('.project-item').forEach(el => el.style.borderColor = 'var(--border)');
+            document.querySelector(`.project-item[data-id="${projectId}"]`).style.borderColor = 'var(--primary)';
+            
+            const res = await fetch(`/project/${projectId}`);
+            const project = await res.json();
+            
+            document.getElementById('projectName').textContent = project.name;
+            document.getElementById('projectDesc').textContent = project.description || 'Không có mô tả';
+            document.getElementById('projectPlaceholder').style.display = 'none';
+            document.getElementById('projectDetail').style.display = 'block';
+            
+            renderClips(project.clips);
+        }
+        
+        function renderClips(clips) {
+            document.getElementById('clipCount').textContent = clips.length;
+            const list = document.getElementById('clipList');
+            
+            if (clips.length === 0) {
+                list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px;"><i class="fas fa-music" style="font-size:24px;opacity:0.5;display:block;margin-bottom:8px;"></i>Chưa có clip nào</div>';
+                return;
+            }
+            
+            list.innerHTML = clips.map((c, i) => `
+                <div class="history-item clip-item" data-id="${c.id}" data-text="${encodeURIComponent(c.text)}" style="margin-bottom:8px;cursor:pointer;" onclick="showClipText('${c.id}')">
+                    <div style="width:24px;height:24px;background:var(--bg-dark);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent);">${i + 1}</div>
+                    <div class="history-info" style="flex:1;">
+                        <div class="history-text" style="font-weight:500;">${c.name}</div>
+                        <div class="history-meta">${c.voice_name} • ${c.chars} ký tự</div>
+                    </div>
+                    <div class="history-actions" onclick="event.stopPropagation()">
+                        <button class="btn-icon clip-play" onclick="playClip('${c.id}')" title="Phát"><i class="fas fa-play"></i></button>
+                        <button class="btn-icon" onclick="downloadClip('${c.id}')" title="Tải MP3" style="color:var(--success);"><i class="fas fa-download"></i></button>
+                        <button class="btn-icon" onclick="deleteClip('${c.id}')" title="Xóa" style="color:var(--danger);"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showClipText(clipId) {
+            const item = document.querySelector(`.clip-item[data-id="${clipId}"]`);
+            const text = decodeURIComponent(item.dataset.text);
+            document.getElementById('clipTextContent').textContent = text;
+            document.getElementById('clipTextModal').style.display = 'flex';
+        }
+        
+        function closeClipTextModal() {
+            document.getElementById('clipTextModal').style.display = 'none';
+        }
+        
+        function showHistoryText(item) {
+            let text = item.dataset.fulltext;
+            // Nếu là từ Jinja template (không encode)
+            if (!text.includes('%')) {
+                document.getElementById('clipTextContent').textContent = text;
+            } else {
+                document.getElementById('clipTextContent').textContent = decodeURIComponent(text);
+            }
+            document.getElementById('clipTextModal').style.display = 'flex';
+        }
+        
+        async function addClipToProject() {
+            if (!currentProjectId) return;
+            const text = document.getElementById('clipText').value.trim();
+            if (!text) { alert('Vui lòng nhập văn bản'); return; }
+            
+            const formData = new FormData();
+            formData.append('text', text);
+            formData.append('voice', document.getElementById('clipVoice').value);
+            formData.append('speed', document.getElementById('clipSpeed').value);
+            formData.append('clip_name', document.getElementById('clipName').value.trim());
+            
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tạo...';
+            
+            try {
+                const res = await fetch(`/project/${currentProjectId}/clip`, { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if (data.error) { alert(data.error); return; }
+                
+                document.getElementById('clipText').value = '';
+                document.getElementById('clipName').value = '';
+                selectProject(currentProjectId);
+                updateQuota();
+            } catch (err) {
+                alert('Có lỗi xảy ra');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plus"></i> Thêm clip';
+            }
+        }
+        
+        function playClip(clipId) {
+            const item = document.querySelector(`.clip-item[data-id="${clipId}"]`);
+            const playBtn = item.querySelector('.clip-play');
+            
+            if (currentClipItem === item && !clipPlayer.paused) {
+                clipPlayer.pause();
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                item.style.borderColor = 'var(--border)';
+                currentClipItem = null;
+                return;
+            }
+            
+            if (currentClipItem) {
+                currentClipItem.querySelector('.clip-play').innerHTML = '<i class="fas fa-play"></i>';
+                currentClipItem.style.borderColor = 'var(--border)';
+            }
+            
+            clipPlayer.src = `/project/${currentProjectId}/clip/${clipId}`;
+            clipPlayer.play();
+            playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            item.style.borderColor = 'var(--success)';
+            currentClipItem = item;
+        }
+        
+        clipPlayer.addEventListener('ended', () => {
+            if (currentClipItem) {
+                currentClipItem.querySelector('.clip-play').innerHTML = '<i class="fas fa-play"></i>';
+                currentClipItem.style.borderColor = 'var(--border)';
+                currentClipItem = null;
+            }
+        });
+        
+        async function deleteClip(clipId) {
+            if (!confirm('Xóa clip này?')) return;
+            await fetch(`/project/${currentProjectId}/clip/${clipId}`, { method: 'DELETE' });
+            selectProject(currentProjectId);
+        }
+        
+        function downloadClip(clipId) {
+            window.location.href = `/project/${currentProjectId}/clip/${clipId}/download`;
+        }
+        
+        function downloadProject() {
+            if (!currentProjectId) return;
+            window.location.href = `/project/${currentProjectId}/download`;
+        }
+        
+        async function deleteProject() {
+            if (!confirm('Xóa dự án này và tất cả clips?')) return;
+            await fetch(`/project/${currentProjectId}`, { method: 'DELETE' });
+            currentProjectId = null;
+            document.getElementById('projectDetail').style.display = 'none';
+            document.getElementById('projectPlaceholder').style.display = 'block';
+            loadProjects();
+        }
+        
+        function editProject() {
+            const name = prompt('Tên dự án mới:', document.getElementById('projectName').textContent);
+            if (!name) return;
+            fetch(`/project/${currentProjectId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            }).then(() => {
+                document.getElementById('projectName').textContent = name;
+                loadProjects();
+            });
+        }
+        
+        function showCreateProjectModal() {
+            document.getElementById('createProjectModal').style.display = 'flex';
+        }
+        
+        function closeCreateProjectModal() {
+            document.getElementById('createProjectModal').style.display = 'none';
+            document.getElementById('newProjectName').value = '';
+            document.getElementById('newProjectDesc').value = '';
+        }
+        
+        async function createProject() {
+            const name = document.getElementById('newProjectName').value.trim();
+            if (!name) { alert('Vui lòng nhập tên dự án'); return; }
+            
+            const res = await fetch('/project/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name,
+                    description: document.getElementById('newProjectDesc').value.trim()
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                closeCreateProjectModal();
+                loadProjects();
+                selectProject(data.project_id);
+            } else {
+                alert(data.error);
+            }
+        }
+        
+        // Clip speed slider
+        document.getElementById('clipSpeed').addEventListener('input', function() {
+            document.getElementById('clipSpeedVal').textContent = this.value;
+        });
+        
+        // Change password modal
+        function showChangePasswordModal() {
+            document.getElementById('changePasswordModal').style.display = 'flex';
+        }
+        
+        function closeChangePasswordModal() {
+            document.getElementById('changePasswordModal').style.display = 'none';
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+        
+        async function changePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            
+            if (newPwd.length < 6) { alert('Mật khẩu mới phải có ít nhất 6 ký tự'); return; }
+            if (newPwd !== confirm) { alert('Mật khẩu xác nhận không khớp'); return; }
+            
+            const res = await fetch('/user/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ current_password: current, new_password: newPwd })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                alert('Đổi mật khẩu thành công!');
+                closeChangePasswordModal();
+            } else {
+                alert(data.error);
+            }
+        }
+    </script>
+    
+    <!-- Modal đổi mật khẩu -->
+    <div id="changePasswordModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;z-index:1000;">
+        <div style="background:var(--bg-card);border-radius:16px;padding:30px;width:100%;max-width:400px;border:1px solid var(--border);">
+            <h3 style="margin-bottom:20px;display:flex;align-items:center;gap:10px;"><i class="fas fa-key"></i> Đổi mật khẩu</h3>
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Mật khẩu hiện tại</label>
+                <input type="password" id="currentPassword" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:14px;">
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Mật khẩu mới</label>
+                <input type="password" id="newPassword" placeholder="Ít nhất 6 ký tự" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:14px;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Xác nhận mật khẩu mới</label>
+                <input type="password" id="confirmPassword" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:14px;">
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button onclick="closeChangePasswordModal()" style="flex:1;padding:12px;background:var(--bg-input);border:none;border-radius:8px;color:var(--text-primary);font-size:14px;cursor:pointer;">Hủy</button>
+                <button onclick="changePassword()" style="flex:1;padding:12px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:8px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Đổi mật khẩu</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal tạo dự án -->
+    <div id="createProjectModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;z-index:1000;">
+        <div style="background:var(--bg-card);border-radius:16px;padding:30px;width:100%;max-width:400px;border:1px solid var(--border);">
+            <h3 style="margin-bottom:20px;display:flex;align-items:center;gap:10px;"><i class="fas fa-folder-plus"></i> Tạo dự án mới</h3>
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Tên dự án *</label>
+                <input type="text" id="newProjectName" placeholder="VD: Video giới thiệu sản phẩm" style="width:100%;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:14px;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;">Mô tả (tùy chọn)</label>
+                <textarea id="newProjectDesc" placeholder="Mô tả ngắn về dự án..." style="width:100%;height:80px;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:14px;resize:none;"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button onclick="closeCreateProjectModal()" style="flex:1;padding:12px;background:var(--bg-input);border:none;border-radius:8px;color:var(--text-primary);font-size:14px;cursor:pointer;">Hủy</button>
+                <button onclick="createProject()" style="flex:1;padding:12px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:8px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Tạo dự án</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal xem text clip -->
+    <div id="clipTextModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;z-index:1000;">
+        <div style="background:var(--bg-card);border-radius:16px;padding:30px;width:100%;max-width:500px;border:1px solid var(--border);max-height:80vh;display:flex;flex-direction:column;">
+            <h3 style="margin-bottom:16px;display:flex;align-items:center;gap:10px;"><i class="fas fa-file-alt"></i> Nội dung văn bản</h3>
+            <div id="clipTextContent" style="flex:1;background:var(--bg-input);border-radius:10px;padding:16px;font-size:14px;line-height:1.6;white-space:pre-wrap;overflow-y:auto;max-height:400px;"></div>
+            <button onclick="closeClipTextModal()" style="margin-top:16px;padding:12px;background:var(--bg-input);border:none;border-radius:8px;color:var(--text-primary);font-size:14px;cursor:pointer;width:100%;">Đóng</button>
+        </div>
+    </div>
+</body>
+</html>

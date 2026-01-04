@@ -1,0 +1,26 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+ENV/
+
+# Audio files
+audio_files/
+*.wav
+*.mp3
+
+# Data files
+users.json
+history.json
+settings.json
+projects.json
+*.lock
+
+# IDE
+.vscode/
+.idea/
