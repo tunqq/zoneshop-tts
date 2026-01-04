@@ -30,11 +30,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", os.urandom(24).hex())
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "default_secret_key_change_me")
 
 TOKEN = os.getenv("VIETTEL_TOKEN")
 if not TOKEN:
-    raise ValueError("VIETTEL_TOKEN không được cấu hình trong .env")
+    print("WARNING: VIETTEL_TOKEN chưa được cấu hình!")
+    TOKEN = "missing_token"
 tts = ViettelTTS(TOKEN)
 
 AUDIO_DIR = "audio_files"
