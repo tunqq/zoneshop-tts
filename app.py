@@ -1,5 +1,5 @@
 """
-Viettel TTS Web UI với hệ thống Login và Quản lý User
+ZONE SHOP - Text to Speech Web UI
 """
 
 from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for, session
@@ -12,11 +12,18 @@ import filelock
 from datetime import datetime
 from viettel_tts import ViettelTTS, VOICES
 
-# Cấu hình ffmpeg path cho pydub
-FFMPEG_PATH = r"C:\Users\ngoct\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.0.1-full_build\bin"
-os.environ["PATH"] += os.pathsep + FFMPEG_PATH
+# Cấu hình ffmpeg path cho pydub (chỉ trên Windows)
+if os.name == 'nt':
+    FFMPEG_PATH = r"C:\Users\ngoct\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.0.1-full_build\bin"
+    if os.path.exists(FFMPEG_PATH):
+        os.environ["PATH"] += os.pathsep + FFMPEG_PATH
 
-from pydub import AudioSegment
+# Import pydub (optional - dùng cho convert MP3)
+try:
+    from pydub import AudioSegment
+    PYDUB_AVAILABLE = True
+except ImportError:
+    PYDUB_AVAILABLE = False
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -303,18 +310,14 @@ def synthesize():
 @app.route("/convert-mp3", methods=["POST"])
 @login_required
 def convert_to_mp3():
-    """Chuyển đổi WAV data sang MP3"""
+    """File từ Viettel đã là MP3, trả về trực tiếp"""
     try:
         if 'audio' not in request.files:
             return jsonify({"error": "Không có file audio"}), 400
         
         audio_file = request.files['audio']
-        audio = AudioSegment.from_file(audio_file, format="wav")
-        mp3_buffer = io.BytesIO()
-        audio.export(mp3_buffer, format="mp3", bitrate="192k")
-        mp3_buffer.seek(0)
-        
-        return send_file(mp3_buffer, mimetype="audio/mpeg", as_attachment=True, download_name="zoneshop_audio.mp3")
+        # File từ Viettel đã là MP3, trả về trực tiếp
+        return send_file(audio_file, mimetype="audio/mpeg", as_attachment=True, download_name="zoneshop_audio.mp3")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -594,21 +597,6 @@ def get_history_audio(file_id):
     return jsonify({"error": "File không tồn tại"}), 404
 
 
-def convert_wav_to_mp3(wav_path):
-    """Chuyển đổi audio sang MP3 và trả về bytes"""
-    # File từ Viettel thực ra là MP3, không phải WAV
-    try:
-        audio = AudioSegment.from_file(wav_path)
-    except Exception:
-        # Thử đọc như MP3
-        audio = AudioSegment.from_mp3(wav_path)
-    
-    mp3_buffer = io.BytesIO()
-    audio.export(mp3_buffer, format="mp3", bitrate="192k")
-    mp3_buffer.seek(0)
-    return mp3_buffer
-
-
 @app.route("/history/<file_id>/download")
 @login_required
 def download_history_audio(file_id):
@@ -616,7 +604,7 @@ def download_history_audio(file_id):
         if item["id"] == file_id:
             filepath = os.path.join(AUDIO_DIR, item["filename"])
             if os.path.exists(filepath):
-                # File từ Viettel thực ra đã là MP3, chỉ cần đổi tên
+                # File từ Viettel đã là MP3, chỉ đổi tên
                 mp3_filename = item["filename"].replace(".wav", ".mp3")
                 return send_file(filepath, mimetype="audio/mpeg", as_attachment=True, download_name=mp3_filename)
     return jsonify({"error": "File không tồn tại"}), 404
@@ -841,15 +829,10 @@ def download_clip_audio(project_id, clip_id):
                 if clip["id"] == clip_id:
                     filepath = os.path.join(AUDIO_DIR, "projects", session["user"], project_id, clip["filename"])
                     if os.path.exists(filepath):
-                        # File từ Viettel thực ra đã là MP3
+                        # File từ Viettel đã là MP3
                         mp3_filename = f"{clip['name']}.mp3"
                         return send_file(filepath, mimetype="audio/mpeg", as_attachment=True, download_name=mp3_filename)
     return jsonify({"error": "File không tồn tại"}), 404
-
-
-def load_audio_file(filepath):
-    """Đọc file audio (có thể là MP3 hoặc WAV)"""
-    return AudioSegment.from_file(filepath)
 
 
 @app.route("/project/<project_id>/download")
@@ -861,14 +844,26 @@ def download_project(project_id):
             if not project["clips"]:
                 return jsonify({"error": "Dự án chưa có clip nào"}), 400
             
+            # Nếu chỉ có 1 clip, tải trực tiếp
+            if len(project["clips"]) == 1:
+                clip = project["clips"][0]
+                filepath = os.path.join(AUDIO_DIR, "projects", session["user"], project_id, clip["filename"])
+                if os.path.exists(filepath):
+                    safe_name = "".join(c for c in project["name"] if c.isalnum() or c in (' ', '-', '_')).strip()
+                    return send_file(filepath, mimetype="audio/mpeg", as_attachment=True, download_name=f"{safe_name}.mp3")
+            
+            # Nhiều clips - cần pydub để ghép
+            if not PYDUB_AVAILABLE:
+                return jsonify({"error": "Chức năng ghép audio chưa khả dụng. Vui lòng tải từng clip."}), 400
+            
             try:
                 combined = AudioSegment.empty()
-                silence = AudioSegment.silent(duration=500)  # 0.5s nghỉ giữa các clips
+                silence = AudioSegment.silent(duration=500)
                 
                 for clip in project["clips"]:
                     filepath = os.path.join(AUDIO_DIR, "projects", session["user"], project_id, clip["filename"])
                     if os.path.exists(filepath):
-                        audio = load_audio_file(filepath)
+                        audio = AudioSegment.from_file(filepath)
                         if len(combined) > 0:
                             combined += silence
                         combined += audio
@@ -878,8 +873,7 @@ def download_project(project_id):
                 mp3_buffer.seek(0)
                 
                 safe_name = "".join(c for c in project["name"] if c.isalnum() or c in (' ', '-', '_')).strip()
-                mp3_filename = f"{safe_name}.mp3"
-                return send_file(mp3_buffer, mimetype="audio/mpeg", as_attachment=True, download_name=mp3_filename)
+                return send_file(mp3_buffer, mimetype="audio/mpeg", as_attachment=True, download_name=f"{safe_name}.mp3")
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
     
