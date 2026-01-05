@@ -8,7 +8,6 @@ import io
 import os
 import json
 import hashlib
-import filelock
 from datetime import datetime
 from viettel_tts import ViettelTTS, VOICES
 
@@ -49,53 +48,45 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 # ============ SETTINGS (Viettel API Quota) ============
 
 def load_settings():
-    lock = filelock.FileLock(f"{SETTINGS_FILE}.lock")
-    with lock:
-        if os.path.exists(SETTINGS_FILE):
-            with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        default_settings = {
-            "viettel_quota": 50000,
-            "viettel_used": 0,
-            "updated_at": datetime.now().strftime("%d/%m/%Y %H:%M")
-        }
-        save_settings(default_settings)
-        return default_settings
+    if os.path.exists(SETTINGS_FILE):
+        with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    default_settings = {
+        "viettel_quota": 50000,
+        "viettel_used": 0,
+        "updated_at": datetime.now().strftime("%d/%m/%Y %H:%M")
+    }
+    save_settings(default_settings)
+    return default_settings
 
 
 def save_settings(settings):
-    lock = filelock.FileLock(f"{SETTINGS_FILE}.lock")
-    with lock:
-        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
-            json.dump(settings, f, ensure_ascii=False, indent=2)
+    with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+        json.dump(settings, f, ensure_ascii=False, indent=2)
 
 
 # ============ USER MANAGEMENT ============
 
 def load_users():
-    lock = filelock.FileLock(f"{USERS_FILE}.lock")
-    with lock:
-        if os.path.exists(USERS_FILE):
-            with open(USERS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        default_users = {
-            "admin": {
-                "password": hash_password("admin123"),
-                "role": "admin",
-                "quota": 999999999,
-                "used": 0,
-                "created_at": datetime.now().strftime("%d/%m/%Y %H:%M")
-            }
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    default_users = {
+        "admin": {
+            "password": hash_password("admin123"),
+            "role": "admin",
+            "quota": 999999999,
+            "used": 0,
+            "created_at": datetime.now().strftime("%d/%m/%Y %H:%M")
         }
-        save_users(default_users)
-        return default_users
+    }
+    save_users(default_users)
+    return default_users
 
 
 def save_users(users):
-    lock = filelock.FileLock(f"{USERS_FILE}.lock")
-    with lock:
-        with open(USERS_FILE, "w", encoding="utf-8") as f:
-            json.dump(users, f, ensure_ascii=False, indent=2)
+    with open(USERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(users, f, ensure_ascii=False, indent=2)
 
 
 def hash_password(password):
@@ -107,7 +98,6 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if "user" not in session:
             return redirect(url_for("login"))
-        # Kiểm tra user còn tồn tại không
         users = load_users()
         if session["user"] not in users:
             session.pop("user", None)
@@ -131,43 +121,35 @@ def admin_required(f):
 # ============ HISTORY ============
 
 def load_history(username=None):
-    lock = filelock.FileLock(f"{HISTORY_FILE}.lock")
-    with lock:
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-                history = json.load(f)
-                if username:
-                    return [h for h in history if h.get("user") == username]
-                return history
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+            history = json.load(f)
+            if username:
+                return [h for h in history if h.get("user") == username]
+            return history
     return []
 
 
 def save_history(history):
-    lock = filelock.FileLock(f"{HISTORY_FILE}.lock")
-    with lock:
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(history, f, ensure_ascii=False, indent=2)
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(history, f, ensure_ascii=False, indent=2)
 
 
 # ============ PROJECTS ============
 
 def load_projects(username=None):
-    lock = filelock.FileLock(f"{PROJECTS_FILE}.lock")
-    with lock:
-        if os.path.exists(PROJECTS_FILE):
-            with open(PROJECTS_FILE, "r", encoding="utf-8") as f:
-                projects = json.load(f)
-                if username:
-                    return [p for p in projects if p.get("user") == username]
-                return projects
+    if os.path.exists(PROJECTS_FILE):
+        with open(PROJECTS_FILE, "r", encoding="utf-8") as f:
+            projects = json.load(f)
+            if username:
+                return [p for p in projects if p.get("user") == username]
+            return projects
     return []
 
 
 def save_projects(projects):
-    lock = filelock.FileLock(f"{PROJECTS_FILE}.lock")
-    with lock:
-        with open(PROJECTS_FILE, "w", encoding="utf-8") as f:
-            json.dump(projects, f, ensure_ascii=False, indent=2)
+    with open(PROJECTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(projects, f, ensure_ascii=False, indent=2)
 
 
 # ============ AUTH ROUTES ============
